@@ -19,7 +19,7 @@
 #   pwsh ./setup-weather-api-resource.ps1 `
 #     -TenantId '<tenant-guid>' `
 #     -AgentAppId '<agent-client-id>' `
-#     -EnvFile '..\sidecar\dev\.env' `
+#     -EnvFile '..\sidecar\.env' `
 #     -UpdateEnv
 #
 # Also adds delegated scope + admin consent for OBO (fixes AADSTS65001).
@@ -28,7 +28,7 @@
 param(
     [string]$TenantId,
     [string]$AgentAppId,
-    [string]$EnvFile = (Join-Path $PSScriptRoot "..\sidecar\dev\.env"),
+    [string]$EnvFile = (Join-Path $PSScriptRoot "..\sidecar\.env"),
     [string]$WeatherApiAppId,
     [string]$AppDisplayName = "Entra Agent ID Sample - Weather API",
     [string]$AppRoleValue = "Weather.Read",
@@ -496,6 +496,6 @@ Write-Host "    docker compose --env-file .env up -d --force-recreate sidecar"
 Write-Host ""
 Write-Host "  Verify autonomous:"
 Write-Host "    curl -s -X POST http://localhost:3003/api/chat -H 'Content-Type: application/json' \\"
-Write-Host "      -d '{\"message\":\"weather in seattle\",\"use_langchain\":false,\"token_flow\":\"autonomous\"}'"
+Write-Host "      -d '{\"message\":\"weather in seattle\",\"token_flow\":\"autonomous\"}'"
 Write-Host "    TR aud should be $appIdUri ; roles should include $AppRoleValue"
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

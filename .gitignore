@@ -1,0 +1,9 @@
+# Local secrets — never commit
+Lab1/sidecar/.env
+.env
+**/.env
+!**/.env.example
+
+# Python
+__pycache__/
+*.py[cod]
