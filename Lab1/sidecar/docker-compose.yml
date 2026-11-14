@@ -20,7 +20,7 @@ services:
       - AzureAd__ClientCredentials__0__ClientSecret=${BLUEPRINT_CLIENT_SECRET}
       
       # Downstream API: autonomous / app-only (client credentials)
-      # "weather-app" matches app.py; scope targets custom API (setup-weather-api-resource.ps1).
+      # "weather-app" matches app.py; scope targets custom API (entra-agent-id-setup.ipynb).
       - DownstreamApis__weather-app__BaseUrl=http://weather-api:8080/
       - DownstreamApis__weather-app__Scopes__0=api://${WEATHER_API_APP_ID}/.default
       - DownstreamApis__weather-app__RequestAppToken=true
@@ -44,7 +44,7 @@ services:
       # Full JWKS signature validation (default: true). Set 'false' to disable.
       - VALIDATE_TOKEN_SIGNATURE=${VALIDATE_TOKEN_SIGNATURE:-true}
       - TENANT_ID=${TENANT_ID}
-      # Must match TR aud (custom API from setup-weather-api-resource.ps1)
+      # Must match TR aud (custom API app id from entra-agent-id-setup.ipynb)
       - EXPECTED_AUDIENCE=api://${WEATHER_API_APP_ID}
     networks:
       - agent-network-dev
