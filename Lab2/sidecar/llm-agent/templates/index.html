@@ -444,7 +444,7 @@
             </div>
             <div>
                 <h1>Microsoft Entra Agent ID - Sidecar Lab</h1>
-                <p class="brand-sub">Sidecar lab · Autonomous agent with local Ollama</p>
+                <p class="brand-sub">Sidecar lab · On-behalf-of (OBO) with local Ollama</p>
             </div>
         </div>
     </header>
@@ -463,15 +463,16 @@
             <div class="controls-group">
                 <div class="control-row">
                     <div class="control-label">Identity Flow</div>
-                    <button class="mode-btn active" data-group="token" data-mode="autonomous" onclick="setTokenFlow('autonomous')">
-                        &#x1F512; Autonomous
-                        <span class="mode-desc">Agent acts alone</span>
-                    </button>
-                    <button type="button" class="mode-btn disabled" data-group="token" data-mode="obo" disabled
-                        title="On-Behalf-Of is not enabled in this lab — autonomous agent flow only"
+                    <button type="button" class="mode-btn disabled" data-group="token" data-mode="autonomous" disabled
+                        title="Autonomous flow is disabled in Lab2 — use On-Behalf-Of"
                         aria-disabled="true">
+                        &#x1F512; Autonomous
+                        <span class="mode-desc">Not enabled in Lab2</span>
+                    </button>
+                    <button type="button" class="mode-btn active obo-active" data-group="token" data-mode="obo"
+                        onclick="setTokenFlow('obo')">
                         &#x1F465; On-Behalf-Of
-                        <span class="mode-desc">Not enabled in this lab</span>
+                        <span class="mode-desc">Agent acts for signed-in user</span>
                     </button>
                 </div>
             </div>
@@ -512,7 +513,7 @@
                 <div class="message assistant">
                     Weather agent powered by <strong>Entra Agent ID</strong> + <strong>Ollama</strong>.
                     <br><br>
-                    This lab uses the <strong>Autonomous</strong> identity flow (app-only agent token). The local <strong>Ollama</strong> model chooses when to call tools.
+                    <strong>Lab2</strong> uses the <strong>On-Behalf-Of (OBO)</strong> flow: sign in above, then ask for weather. The local <strong>Ollama</strong> model chooses when to call tools.
                     <br><br>
                     Try: <em>"What is weather in Dallas?"</em>
                 </div>
@@ -540,9 +541,10 @@
         // ==============================
         // State
         // ==============================
-        /** Lab UI: autonomous only; OBO control is visible but disabled. */
-        const OBO_UI_ENABLED = false;
-        let tokenFlow = 'autonomous';
+        /** Lab2 UI: OBO only; autonomous control is visible but disabled. */
+        const OBO_UI_ENABLED = true;
+        const AUTONOMOUS_UI_ENABLED = false;
+        let tokenFlow = 'obo';
         let ollamaAvailable = false;
         let msalInstance = null;
         let msalConfig = null;
@@ -567,6 +569,7 @@
         // ==============================
         function setTokenFlow(flow) {
             if (flow === 'obo' && !OBO_UI_ENABLED) return;
+            if (flow === 'autonomous' && !AUTONOMOUS_UI_ENABLED) return;
             tokenFlow = flow;
             document.querySelectorAll('[data-group="token"]').forEach(btn => {
                 btn.classList.remove('active', 'obo-active');
@@ -681,6 +684,7 @@
             updateOboUI();
         }
 
+        setTokenFlow('obo');
         initMsal();
 
         // ==============================
