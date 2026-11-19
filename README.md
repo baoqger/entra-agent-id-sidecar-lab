@@ -16,6 +16,8 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 
 ### Lab1 — Sidecar stack (available)
 
+![Lab1 — autonomous agent, auth sidecar, and weather API demo](images/lab1.gif)
+
 1. **[`Lab1/scripts/`](Lab1/scripts/)** — Jupyter notebook provisions blueprint, Agent Identity, and Weather API app registration in Entra via Microsoft Graph.
 2. **[`Lab1/sidecar/`](Lab1/sidecar/)** — Docker Compose runs the official auth sidecar, a LangChain/Ollama sample agent, and a weather API that validates tokens.
 
