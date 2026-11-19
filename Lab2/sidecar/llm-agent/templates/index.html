@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Entra Agent ID — Sidecar Lab</title>
+    <!-- MSAL.js for interactive sign-in (OBO flow) -->
+    <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
+    <style>
+        :root {
+            --bg-canvas: #141414;
+            --bg-subtle: #1c1c1c;
+            --bg-card: #242424;
+            --bg-card-hover: #2b2b2b;
+            --stroke-default: #3d3d3d;
+            --stroke-strong: #525252;
+            --text-primary: #ffffff;
+            --text-secondary: #c8c8c8;
+            --text-muted: #9a9a9a;
+            --brand: #0078d4;
+            --brand-hover: #106ebe;
+            --brand-pressed: #005a9e;
+            --accent-purple: #8764b8;
+            --link: #62abf5;
+            --success: #54b054;
+            --warning: #e8b031;
+            --error: #ee5a6f;
+            --token-tc: #e8b031;
+            --token-tr: #b4a0ff;
+            --token-t1: #da8ae7;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+            --focus-ring: 0 0 0 2px var(--bg-canvas), 0 0 0 4px var(--brand);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Segoe UI Variable Text', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background: var(--bg-canvas);
+            height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            line-height: 1.45;
+        }
+        .site-header {
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--stroke-default);
+            background: var(--bg-subtle);
+            padding: 14px 24px;
+        }
+        .site-brand {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-card);
+        }
+        .brand-mark svg { width: 22px; height: 22px; fill: #fff; }
+        .site-brand h1 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        .brand-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 16px 24px 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+        }
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--stroke-default);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--stroke-default);
+        }
+        .panel-header h2 { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+        .icon {
+            width: 32px; height: 32px;
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .icon svg { width: 18px; height: 18px; fill: #fff; }
+        .icon-chat { background: var(--brand); }
+        .icon-debug { background: var(--accent-purple); }
+        .chat-messages {
+            flex: 1; overflow-y: auto;
+            padding: 10px; margin-bottom: 15px;
+        }
+        .message {
+            margin-bottom: 15px; padding: 12px 16px;
+            border-radius: 12px; max-width: 85%;
+        }
+        .message.user {
+            background: var(--brand);
+            margin-left: auto;
+            border: 1px solid var(--brand-pressed);
+        }
+        .message.assistant {
+            background: var(--bg-subtle);
+            border: 1px solid var(--stroke-default);
+        }
+        .message.assistant pre {
+            background: var(--bg-canvas);
+            border: 1px solid var(--stroke-default);
+            padding: 10px; border-radius: var(--radius-sm);
+            overflow-x: auto; font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        .input-area {
+            display: flex; gap: 10px;
+        }
+        .input-area input {
+            flex: 1; padding: 10px 14px;
+            border: 1px solid var(--stroke-strong);
+            border-radius: var(--radius-md);
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+        .input-area input::placeholder { color: var(--text-muted); }
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: var(--focus-ring);
+        }
+        .input-area button {
+            padding: 10px 22px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            background: var(--brand);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .input-area button:hover:not(:disabled) { background: var(--brand-hover); }
+        .input-area button:active:not(:disabled) { background: var(--brand-pressed); }
+        .input-area button:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+        .input-area button:disabled { opacity: 0.45; cursor: not-allowed; }
+        .debug-content {
+            flex: 1; overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.8rem;
+        }
+        .debug-entry {
+            margin-bottom: 10px; padding: 8px 10px;
+            background: var(--bg-subtle);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--stroke-default);
+            border-left: 3px solid var(--brand);
+            font-family: 'Cascadia Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 0.68rem;
+        }
+        .debug-entry.error { border-left-color: var(--error); }
+        .debug-entry.success { border-left-color: var(--success); }
+        .debug-entry.obo { border-left-color: var(--link); }
+        .debug-entry.docs { border-left-color: var(--stroke-strong); }
+        .debug-step {
+            color: var(--link);
+            font-weight: 600;
+            margin-bottom: 3px;
+            font-size: 0.72rem;
+        }
+        .debug-entry.error .debug-step { color: var(--error); }
+        .debug-entry.success .debug-step { color: var(--success); }
+        .debug-entry.obo .debug-step { color: var(--link); }
+        .debug-message { color: var(--text-secondary); margin-bottom: 5px; font-size: 0.68rem; }
+        .debug-docs { font-size: 0.68rem; text-align: center; padding: 4px 0; }
+        .debug-docs a {
+            color: var(--link);
+            text-decoration: none;
+        }
+        .debug-docs a:hover { text-decoration: underline; color: var(--text-primary); }
+        .debug-data {
+            background: var(--bg-canvas);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--stroke-default);
+            overflow-x: auto;
+            font-size: 0.72rem;
+        }
+        .debug-data .data-row {
+            display: flex;
+            padding: 2px 0;
+            border-bottom: 1px solid var(--stroke-default);
+        }
+        .debug-data .data-row:last-child { border-bottom: none; }
+        .debug-data .data-key {
+            color: var(--text-muted);
+            min-width: 120px;
+            flex-shrink: 0;
+            font-size: 0.68rem;
+        }
+        .debug-data .data-val {
+            color: #8fd4a8;
+            word-break: break-all;
+            font-size: 0.68rem;
+        }
+        .debug-data .data-val.pass { color: var(--success); font-weight: 600; }
+        .debug-data .data-val.warn { color: var(--warning); }
+        .debug-data .data-val.info { color: var(--text-secondary); }
+        .status-bar {
+            display: flex; flex-wrap: wrap; gap: 12px 16px;
+            padding: 8px 12px; margin-bottom: 10px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--stroke-default);
+            border-radius: var(--radius-md);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+        .status-item { display: flex; align-items: center; gap: 6px; }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+        .status-dot.online { background: var(--success); box-shadow: 0 0 6px rgba(84, 176, 84, 0.5); }
+        .status-dot.offline { background: var(--error); }
+        /* ---- Identity flow selector ---- */
+        .controls-group {
+            margin-bottom: 8px;
+        }
+        .control-row {
+            display: flex; gap: 8px;
+            padding: 8px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--stroke-default);
+            border-radius: var(--radius-md);
+        }
+        .control-label {
+            display: flex; align-items: center;
+            font-size: 0.7rem; font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0 6px;
+            min-width: 72px;
+        }
+        .mode-btn {
+            flex: 1; padding: 8px 10px;
+            border: 1px solid var(--stroke-strong);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-size: 0.78rem; font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+            text-align: center;
+        }
+        .mode-btn:hover:not(:disabled):not(.disabled) {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border-color: var(--brand);
+        }
+        .mode-btn:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+        .mode-btn:disabled,
+        .mode-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-style: dashed;
+            border-color: var(--stroke-default);
+        }
+        .mode-btn.active {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff;
+        }
+        .mode-btn.active.obo-active {
+            background: var(--brand);
+            border-color: var(--brand);
+        }
+        .mode-desc {
+            font-size: 0.68rem; font-weight: 400;
+            display: block; margin-top: 2px;
+            opacity: 0.75;
+        }
+        /* Sign-in banner */
+        .signin-banner {
+            display: none;
+            padding: 10px 14px;
+            background: rgba(0, 120, 212, 0.12);
+            border: 1px solid rgba(0, 120, 212, 0.35);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            font-size: 0.82rem;
+            align-items: center; gap: 10px;
+        }
+        .signin-banner.visible { display: flex; }
+        .ollama-banner {
+            display: none;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            background: rgba(238, 90, 111, 0.1);
+            border: 1px solid rgba(238, 90, 111, 0.35);
+            border-radius: var(--radius-md);
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .ollama-banner.visible { display: block; }
+        .signin-banner .user-info { flex: 1; color: var(--text-secondary); }
+        .signin-banner .user-email { color: var(--link); font-weight: 600; }
+        .signin-btn {
+            padding: 7px 16px;
+            border: none; border-radius: var(--radius-sm);
+            font-weight: 600; font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .signin-btn.login {
+            background: var(--brand);
+            color: #fff;
+        }
+        .signin-btn.login:hover { background: var(--brand-hover); }
+        .signin-btn.logout {
+            background: var(--bg-card);
+            border: 1px solid var(--stroke-strong);
+            color: var(--text-secondary);
+        }
+        .signin-btn.logout:hover { background: var(--bg-card-hover); }
+        /* Token viewer cards */
+        .token-card {
+            background: var(--bg-canvas);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            border: 1px solid var(--stroke-default);
+            border-left: 3px solid var(--brand);
+            font-family: 'Cascadia Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 0.68rem;
+        }
+        .token-card.tc { border-left-color: var(--token-tc); }
+        .token-card.tr { border-left-color: var(--token-tr); }
+        .token-card.t1 { border-left-color: var(--token-t1); }
+        .token-card-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .token-card.tc .token-card-title { color: var(--token-tc); }
+        .token-card.tr .token-card-title { color: var(--token-tr); }
+        .token-card.t1 .token-card-title { color: var(--token-t1); }
+        .token-claim {
+            display: flex;
+            padding: 2px 0;
+            border-bottom: 1px solid var(--stroke-default);
+        }
+        .token-claim:last-child { border-bottom: none; }
+        .claim-key {
+            color: var(--text-muted);
+            min-width: 120px;
+            font-size: 0.68rem;
+        }
+        .claim-val {
+            color: var(--text-secondary);
+            word-break: break-all;
+            font-size: 0.68rem;
+        }
+        .claim-val.highlight { color: var(--warning); font-weight: 600; }
+        .claim-val.highlight-purple { color: var(--token-t1); font-weight: 600; }
+        .claim-val.highlight-green { color: var(--success); font-weight: 600; }
+        .identity-info {
+            display: flex; flex-wrap: wrap; gap: 6px 16px;
+            padding: 8px 12px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--stroke-default);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            font-family: 'Cascadia Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 0.68rem;
+        }
+        .identity-info .id-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .identity-info .id-value {
+            color: var(--text-secondary);
+            user-select: all;
+        }
+        .text-muted { color: var(--text-muted); }
+        .site-footer {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 12px 16px 16px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--stroke-default);
+            background: var(--bg-subtle);
+        }
+        .site-footer a {
+            color: var(--link);
+            text-decoration: none;
+        }
+        .site-footer a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; padding: 12px 16px; }
+            .site-header { padding: 12px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-brand">
+            <div class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 1.5l8.5 4.9v9.2L12 20.5l-8.5-4.9V6.4L12 1.5zm0 2.2L5.5 7v8l6.5 3.5 6.5-3.5V7L12 3.7zM11 8h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg>
+            </div>
+            <div>
+                <h1>Microsoft Entra Agent ID - Sidecar Lab</h1>
+                <p class="brand-sub">Sidecar lab · Autonomous agent with local Ollama</p>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="panel">
+            <div class="panel-header">
+                <div class="icon icon-chat"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C9.24 2 7 4.24 7 7v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7c0-2.76-2.24-5-5-5zm0 1.5A3.5 3.5 0 0 1 15.5 7v3h-7V7A3.5 3.5 0 0 1 12 3.5zm0 10a1.5 1.5 0 0 1 .75 2.8V18a.75.75 0 0 1-1.5 0v-1.7A1.5 1.5 0 0 1 12 13.5z"/></svg></div>
+                <h2>Chat</h2>
+            </div>
+
+            <div class="identity-info" id="identityInfo">
+                <span><span class="id-label">Tenant ID: </span><span class="id-value" id="dispTenantId">&hellip;</span></span>
+                <span><span class="id-label">Agent ID: </span><span class="id-value" id="dispAgentId">&hellip;</span></span>
+            </div>
+
+            <div class="controls-group">
+                <div class="control-row">
+                    <div class="control-label">Identity Flow</div>
+                    <button class="mode-btn active" data-group="token" data-mode="autonomous" onclick="setTokenFlow('autonomous')">
+                        &#x1F512; Autonomous
+                        <span class="mode-desc">Agent acts alone</span>
+                    </button>
+                    <button type="button" class="mode-btn disabled" data-group="token" data-mode="obo" disabled
+                        title="On-Behalf-Of is not enabled in this lab — autonomous agent flow only"
+                        aria-disabled="true">
+                        &#x1F465; On-Behalf-Of
+                        <span class="mode-desc">Not enabled in this lab</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ollama-banner" id="ollamaBanner">
+                &#x1F4BB; Ollama is not ready. Send is disabled until the model is loaded (see status dot below).
+            </div>
+
+            <!-- OBO sign-in banner -->
+            <div class="signin-banner" id="signinBanner">
+                <div class="user-info" id="userInfo">
+                    &#x1F511; OBO mode requires user sign-in via Microsoft Entra ID
+                </div>
+                <button class="signin-btn login" id="signinBtn" onclick="msalSignIn()">Sign In</button>
+                <button class="signin-btn logout" id="signoutBtn" onclick="msalSignOut()" style="display:none;">Sign Out</button>
+            </div>
+
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot" id="ollamaStatus"></span>
+                    <span>Ollama</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot online"></span>
+                    <span>Sidecar</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot online"></span>
+                    <span>Weather API</span>
+                </div>
+                <div class="status-item" id="oboStatusItem" style="display:none;">
+                    <span class="status-dot offline" id="oboStatus"></span>
+                    <span>User Auth</span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    Weather agent powered by <strong>Entra Agent ID</strong> + <strong>Ollama</strong>.
+                    <br><br>
+                    This lab uses the <strong>Autonomous</strong> identity flow (app-only agent token). The local <strong>Ollama</strong> model chooses when to call tools.
+                    <br><br>
+                    Try: <em>"What is weather in Dallas?"</em>
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userInput" value="Weather in Dallas?" placeholder="Ask about the weather in any city..." />
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header">
+                <div class="icon icon-debug"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a1 1 0 0 1 1 1v3.09c1.27.2 2.42.7 3.38 1.45l2.19-2.19a1 1 0 1 1 1.41 1.42l-2.18 2.18A7.96 7.96 0 0 1 19.96 12H20a1 1 0 1 1 0 2h-.04a7.96 7.96 0 0 1-2.16 3.05l2.18 2.18a1 1 0 0 1-1.41 1.42l-2.19-2.19A7.96 7.96 0 0 1 13 19.91V23a1 1 0 1 1-2 0v-3.09a7.96 7.96 0 0 1-3.38-1.45l-2.19 2.19a1 1 0 0 1-1.41-1.42l2.18-2.18A7.96 7.96 0 0 1 4.04 14H4a1 1 0 1 1 0-2h.04A7.96 7.96 0 0 1 6.2 8.95L4.02 6.77a1 1 0 0 1 1.41-1.42L7.62 7.54A7.96 7.96 0 0 1 11 6.09V3a1 1 0 0 1 1-1zm0 6a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg></div>
+                <h2>Agent Identity Flow</h2>
+            </div>
+            <div class="debug-content" id="debugContent">
+                <div class="debug-entry">
+                    <div class="debug-step">Waiting for query...</div>
+                    <div class="debug-message">Send a message to see the token flow</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==============================
+        // State
+        // ==============================
+        /** Lab UI: autonomous only; OBO control is visible but disabled. */
+        const OBO_UI_ENABLED = false;
+        let tokenFlow = 'autonomous';
+        let ollamaAvailable = false;
+        let msalInstance = null;
+        let msalConfig = null;
+        let currentUserToken = null;
+        let currentAccount = null;
+
+        const chatMessages = document.getElementById('chatMessages');
+        const debugContent = document.getElementById('debugContent');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const ollamaStatus = document.getElementById('ollamaStatus');
+        const ollamaBanner = document.getElementById('ollamaBanner');
+        const signinBanner = document.getElementById('signinBanner');
+        const userInfo = document.getElementById('userInfo');
+        const signinBtn = document.getElementById('signinBtn');
+        const signoutBtn = document.getElementById('signoutBtn');
+        const oboStatusItem = document.getElementById('oboStatusItem');
+        const oboStatus = document.getElementById('oboStatus');
+
+        // ==============================
+        // Identity flow
+        // ==============================
+        function setTokenFlow(flow) {
+            if (flow === 'obo' && !OBO_UI_ENABLED) return;
+            tokenFlow = flow;
+            document.querySelectorAll('[data-group="token"]').forEach(btn => {
+                btn.classList.remove('active', 'obo-active');
+                if (btn.dataset.mode === flow) {
+                    btn.classList.add('active');
+                    if (flow === 'obo') btn.classList.add('obo-active');
+                }
+            });
+            signinBanner.classList.toggle('visible', flow === 'obo');
+            oboStatusItem.style.display = flow === 'obo' ? 'flex' : 'none';
+            updateOboUI();
+        }
+
+        function updateOboUI() {
+            if (currentAccount) {
+                const name = currentAccount.name || currentAccount.username;
+                userInfo.innerHTML = '&#x2705; Signed in as <span class="user-email">' + name + '</span>';
+                signinBtn.style.display = 'none';
+                signoutBtn.style.display = 'inline-block';
+                oboStatus.className = 'status-dot online';
+            } else {
+                userInfo.innerHTML = '&#x1F511; OBO mode requires user sign-in via Microsoft Entra ID';
+                signinBtn.style.display = 'inline-block';
+                signoutBtn.style.display = 'none';
+                oboStatus.className = 'status-dot offline';
+                currentUserToken = null;
+            }
+        }
+
+        // ==============================
+        // MSAL.js Initialization
+        // ==============================
+        async function initMsal() {
+            try {
+                const resp = await fetch('/api/config');
+                msalConfig = await resp.json();
+                // Populate identity info bar
+                if (msalConfig.tenant_id) document.getElementById('dispTenantId').textContent = msalConfig.tenant_id;
+                if (msalConfig.agent_app_id) document.getElementById('dispAgentId').textContent = msalConfig.agent_app_id;
+
+                const msalClientId = msalConfig.client_spa_app_id || msalConfig.blueprint_app_id;
+                if (!msalClientId || !msalConfig.tenant_id) {
+                    console.warn('MSAL config incomplete — OBO sign-in disabled');
+                    return;
+                }
+                msalInstance = new msal.PublicClientApplication({
+                    auth: {
+                        clientId: msalClientId,
+                        authority: msalConfig.authority,
+                        redirectUri: msalConfig.redirect_uri,
+                    },
+                    cache: {
+                        cacheLocation: 'sessionStorage',
+                        storeAuthStateInCookie: false,
+                    }
+                });
+                await msalInstance.initialize();
+                const accounts = msalInstance.getAllAccounts();
+                if (accounts.length > 0) {
+                    currentAccount = accounts[0];
+                    await acquireTokenSilent();
+                    updateOboUI();
+                }
+            } catch (e) {
+                console.error('MSAL init error:', e);
+            }
+        }
+
+        async function acquireTokenSilent() {
+            if (!msalInstance || !currentAccount || !msalConfig) return null;
+            try {
+                const result = await msalInstance.acquireTokenSilent({
+                    account: currentAccount,
+                    scopes: msalConfig.obo_scopes,
+                });
+                currentUserToken = result.accessToken;
+                return result.accessToken;
+            } catch (e) {
+                console.warn('Silent token failed, need interactive:', e);
+                currentUserToken = null;
+                return null;
+            }
+        }
+
+        async function msalSignIn() {
+            if (!msalInstance || !msalConfig) {
+                addMessage('MSAL not initialized. Check console for errors.', false);
+                return;
+            }
+            try {
+                const result = await msalInstance.loginPopup({
+                    scopes: msalConfig.obo_scopes,
+                });
+                currentAccount = result.account;
+                currentUserToken = result.accessToken;
+                updateOboUI();
+                addMessage('&#x2705; Signed in as <strong>' + (currentAccount.name || currentAccount.username) + '</strong>. OBO flow is now active!', false);
+            } catch (e) {
+                console.error('Sign-in error:', e);
+                if (e.errorCode !== 'user_cancelled') {
+                    addMessage('Sign-in failed: ' + e.message, false);
+                }
+            }
+        }
+
+        function msalSignOut() {
+            if (msalInstance && currentAccount) {
+                msalInstance.logoutPopup({ account: currentAccount }).catch(() => {});
+            }
+            currentAccount = null;
+            currentUserToken = null;
+            updateOboUI();
+        }
+
+        initMsal();
+
+        // ==============================
+        // Status check
+        // ==============================
+        function updateOllamaUi() {
+            ollamaStatus.className = 'status-dot ' + (ollamaAvailable ? 'online' : 'offline');
+            ollamaBanner.classList.toggle('visible', !ollamaAvailable);
+            if (!sendBtn.dataset.sending) {
+                sendBtn.disabled = !ollamaAvailable;
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                ollamaAvailable = !!data.ollama_available;
+            } catch (e) {
+                ollamaAvailable = false;
+            }
+            updateOllamaUi();
+        }
+        checkStatus();
+        setInterval(checkStatus, 10000);
+
+        // ==============================
+        // Chat helpers
+        // ==============================
+        function renderDataBlock(data) {
+            let html = '<div class="debug-data">';
+            for (const [key, val] of Object.entries(data)) {
+                const label = key.replace(/^\d+_/, '').replace(/_/g, ' ');
+                const strVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
+                let cls = 'data-val';
+                if (strVal.startsWith('PASS')) cls += ' pass';
+                else if (strVal.startsWith('CHECK') || strVal.startsWith('NONE') || strVal.includes('⚠')) cls += ' warn';
+                else cls += ' info';
+                html += '<div class="data-row">'
+                    + '<span class="data-key">' + label + '</span>'
+                    + '<span class="' + cls + '">' + strVal + '</span>'
+                    + '</div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function addMessage(content, isUser) {
+            const div = document.createElement('div');
+            div.className = 'message ' + (isUser ? 'user' : 'assistant');
+            div.innerHTML = content.replace(/\\\\n/g, '<br>');
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateDebug(debugLogs) {
+            debugContent.innerHTML = '';
+            debugLogs.forEach(entry => {
+                const div = document.createElement('div');
+                let entryClass = 'debug-entry';
+                if (entry.step.includes('ERROR')) entryClass += ' error';
+                if (entry.step.includes('COMPLETE') || entry.step.includes('RECEIVED')) entryClass += ' success';
+                if (entry.step.startsWith('OBO') || entry.step.includes('OBO')) entryClass += ' obo';
+                div.className = entryClass;
+
+                let icon = '&#x2713;';  // ✓ for all steps
+                if (entry.step.includes('ERROR')) icon = '&#x2717;';  // ✗
+
+                let html = '<div class="debug-step">' + icon + ' ' + entry.step + '</div>';
+                html += '<div class="debug-message">' + entry.message + '</div>';
+                if (entry.data && entry.data._jwt_token) {
+                    const tok = entry.data._jwt_token;
+                    html += makeTokenCard(tok.title, tok.claims, tok.css, tok.hl);
+                } else if (entry.message === '_doc_links') {
+                    div.className = 'debug-entry docs';
+                    html = '<div class="debug-docs">'
+                        + '<a href="https://learn.microsoft.com/en-us/entra/identity-platform/access-token-claims-reference" target="_blank">&#x1F4D6; Access token claims</a>'
+                        + ' | '
+                        + '<a href="https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference" target="_blank">ID token claims</a>'
+                        + ' | '
+                        + '<a href="https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/agent-on-behalf-of-oauth-flow" target="_blank">Agent OBO flow</a>'
+                        + '</div>';
+                } else if (entry.data) {
+                    html += renderDataBlock(entry.data);
+                }
+                div.innerHTML = html;
+                debugContent.appendChild(div);
+            });
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+
+        // ==============================
+        // Send message
+        // ==============================
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            if (!ollamaAvailable) {
+                ollamaBanner.classList.add('visible');
+                return;
+            }
+
+            if (tokenFlow === 'obo' && !currentUserToken) {
+                const silentToken = await acquireTokenSilent();
+                if (!silentToken) {
+                    addMessage(message, true);
+                    addMessage('&#x1F511; Please sign in first to use OBO mode. Click the <strong>Sign In</strong> button above.', false);
+                    return;
+                }
+            }
+
+            addMessage(message, true);
+            userInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.dataset.sending = '1';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const flowLabel = tokenFlow === 'obo' ? 'OBO' : 'Autonomous';
+            debugContent.innerHTML = '<div class="debug-entry' + (tokenFlow==='obo'?' obo':'') + '"><div class="debug-step">&#x23F3; Processing: Ollama + ' + flowLabel + '...</div>'
+                + '<div class="debug-message">Ollama is thinking &mdash; local models are slower than cloud LLMs</div>'
+                + '</div>';
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+                const body = {
+                    message: message,
+                    token_flow: tokenFlow,
+                };
+                if (tokenFlow === 'obo' && currentUserToken) {
+                    body.user_token = currentUserToken;
+                }
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                const data = await response.json();
+
+                if (data.error) {
+                    addMessage('Error: ' + data.error, false);
+                } else {
+                    const flowBadge = (data.token_flow === 'obo' || tokenFlow === 'obo')
+                        ? '<br><small><em>&#x1F504; OBO Flow (On-Behalf-Of ' + (currentAccount ? currentAccount.name : 'user') + ')</em></small>'
+                        : '<br><small><em>&#x1F512; Autonomous Agent</em></small>';
+                    addMessage(data.response + flowBadge + '<small><em> &#x1F4BB; Ollama</em></small>', false);
+
+                    if (data.debug) {
+                        updateDebug(data.debug);
+                    }
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    addMessage('Request timed out. Ollama may still be loading the model &mdash; wait for the green Ollama status dot and try again.', false);
+                } else {
+                    addMessage('Error: ' + error.message, false);
+                }
+            }
+
+            delete sendBtn.dataset.sending;
+            updateOllamaUi();
+        }
+
+        // ==============================
+        // Token Cards (inline in debug flow)
+        // ==============================
+        const highlightClaims = [
+            'aud', 'sub', 'idtyp', 'appid', 'azp', 'name', 'upn', 'preferred_username',
+            'scp', 'roles', 'wids',
+            'xms_act_fct', 'xms_sub_fct', 'xms_par_app_azp', 'xms_frd'
+        ];
+
+        function renderClaimsHtml(claims, hlClass) {
+            if (!claims) return '<em class="text-muted">Not available</em>';
+            let html = '';
+            for (const [key, val] of Object.entries(claims)) {
+                const isHL = highlightClaims.includes(key);
+                const valClass = isHL ? 'claim-val ' + hlClass : 'claim-val';
+                const displayVal = (val === 'N/A' || val === null || val === undefined)
+                    ? '<span style="opacity:0.3">\u2014</span>'
+                    : (typeof val === 'object' ? JSON.stringify(val) : String(val));
+                html += '<div class="token-claim"><span class="claim-key">' + key + '</span><span class="' + valClass + '">' + displayVal + '</span></div>';
+            }
+            return html;
+        }
+
+        function makeTokenCard(title, claims, cssClass, hlClass) {
+            return '<div class="token-card ' + cssClass + '" style="margin-bottom:10px;">'
+                + '<div class="token-card-title">' + title + '</div>'
+                + renderClaimsHtml(claims, hlClass)
+                + '</div>';
+        }
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+    <footer class="site-footer">
+        <a href="https://github.com/baoqger/entra-agent-id-sidecar-lab" target="_blank">
+            &#128279; View source code on GitHub
+        </a>
+    </footer>
+</body>
+</html>
