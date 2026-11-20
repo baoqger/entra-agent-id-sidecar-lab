@@ -45,7 +45,7 @@ services:
       - VALIDATE_TOKEN_SIGNATURE=${VALIDATE_TOKEN_SIGNATURE:-true}
       - TENANT_ID=${TENANT_ID}
       # Must match TR aud (custom API app id from weather-api-setup.ps1)
-      - EXPECTED_AUDIENCE=api://${WEATHER_API_APP_ID}
+      - EXPECTED_AUDIENCE=${WEATHER_API_APP_ID}
     networks:
       - agent-network-dev
     healthcheck:

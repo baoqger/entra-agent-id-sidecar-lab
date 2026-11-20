@@ -248,31 +248,37 @@ def validate_token(f):
                 logger.info("Decoded token claims: %s", json.dumps(decoded, default=str, sort_keys=True))
             
         except jwt.exceptions.InvalidSignatureError:
+            print("[TOKEN REJECTED] Invalid signature — does not match Entra JWKS")
             return jsonify({
                 "error": "Invalid token signature",
                 "message": "Token signature does not match Entra ID signing keys"
             }), 401
         except jwt.exceptions.ExpiredSignatureError:
+            print("[TOKEN REJECTED] Token expired")
             return jsonify({
                 "error": "Token expired",
                 "message": "The Agent Identity token has expired"
             }), 401
         except jwt.exceptions.InvalidIssuerError:
+            print(f"[TOKEN REJECTED] Invalid issuer — expected {EXPECTED_ISSUER}")
             return jsonify({
                 "error": "Invalid issuer",
                 "message": f"Token issuer does not match expected tenant ({EXPECTED_ISSUER})"
             }), 401
         except jwt.exceptions.InvalidAudienceError:
+            print(f"[TOKEN REJECTED] Invalid audience — expected aud {EXPECTED_AUDIENCE}")
             return jsonify({
                 "error": "Invalid audience",
                 "message": f"Expected aud {EXPECTED_AUDIENCE}",
             }), 401
         except jwt.exceptions.DecodeError as e:
+            print(f"[TOKEN REJECTED] Invalid token format: {e}")
             return jsonify({
                 "error": "Invalid token format",
                 "message": str(e)
             }), 401
         except Exception as e:
+            print(f"[TOKEN REJECTED] Validation failed: {type(e).__name__}: {e}")
             return jsonify({
                 "error": "Token validation failed",
                 "message": str(e)
