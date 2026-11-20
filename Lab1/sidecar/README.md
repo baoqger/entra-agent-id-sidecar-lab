@@ -25,7 +25,7 @@ If validation succeeds, the response includes real weather from Open-Meteo. If t
 
 ## Scripts (`Lab1/scripts`) and this sidecar stack
 
-The **`sidecar/`** folder is only the **runtime**: containers, sample agent, and sample downstream API. It does **not** create anything in Microsoft Entra. That work lives in **`Lab1/scripts/`**, chiefly the Jupyter notebook [`entra-agent-id-setup.ipynb`](../scripts/entra-agent-id-setup.ipynb).
+The **`sidecar/`** folder is only the **runtime**: containers, sample agent, and sample downstream API. It does **not** create anything in Microsoft Entra. That work lives in **`Lab1/scripts/`** — PowerShell setup scripts (`entra-agent-blueprint-identity-setup.ps1`, `weather-api-setup.ps1`).
 
 Think of two layers:
 
@@ -34,35 +34,32 @@ Think of two layers:
 | **Tenant setup** | `Lab1/scripts/` | Graph calls to create the blueprint, blueprint secret, Agent Identity, and Weather API app registration; prints IDs you need later. |
 | **Runtime lab** | `Lab1/sidecar/` (this folder) | Reads those IDs from `.env` and runs Docker Compose so the sidecar can mint tokens and the agent can call `weather-api`. |
 
-**Order matters.** Do not run `docker compose` first and then try to invent `.env` values by hand—the sidecar and `weather-api` will fail token and audience checks until Entra matches the notebook output.
+**Order matters.** Do not run `docker compose` first and then try to invent `.env` values by hand—the sidecar and `weather-api` will fail token and audience checks until Entra matches your setup output.
 
 ### Recommended workflow
 
-1. **Notebook (Entra)** — From `Lab1/scripts/`, open [`entra-agent-id-setup.ipynb`](../scripts/entra-agent-id-setup.ipynb) and run cells **in order**:
-   - Part 1: Agent ID blueprint, client secret, Agent Identity.
-   - Part 2: Weather API app, application ID URI (`api://...`), service principal.
-   - Summary / `lab_context` cell (confirm IDs; do not commit outputs with secrets).
+1. **Agent ID (Entra)** — From `Lab1/scripts/`, run [`entra-agent-blueprint-identity-setup.ps1`](../scripts/entra-agent-blueprint-identity-setup.ps1) (requires `Connect-MgGraph` with Agent ID blueprint scopes). Copy the **blueprint client secret**, **blueprint app id**, and **agent app id** from the console output.
 
-2. **Populate `.env` (bridge)** — Still in the notebook, run the **“Update sidecar `.env`”** cells (or copy from `lab_context` into `sidecar/.env`). That file is the **only link** between scripts and Compose: same tenant, blueprint, agent, and weather API app IDs the notebook created.
+2. **Weather API (Entra)** — Set `TENANT_ID` and `AGENT_CLIENT_ID` in [`sidecar/.env`](.env) (or pass `-TenantId` / `-AgentAppId`), then run [`weather-api-setup.ps1`](../scripts/weather-api-setup.ps1). Copy the **Weather API app id** from the summary.
 
-3. **Sidecar stack (Docker)** — From **`Lab1/sidecar/`**, run `docker compose up`. Containers use `.env`; they never call back into the notebook.
+3. **Populate `.env` (bridge)** — Complete [`sidecar/.env`](.env) from [`.env.example`](.env.example): `TENANT_ID`, `BLUEPRINT_APP_ID`, `BLUEPRINT_CLIENT_SECRET`, `AGENT_CLIENT_ID`, `WEATHER_API_APP_ID`.
+
+4. **Sidecar stack (Docker)** — From **`Lab1/sidecar/`**, run `docker compose up`. Containers read `.env` only.
 
 ```
-Lab1/scripts/entra-agent-id-setup.ipynb     Lab1/sidecar/
-         │                                          │
-         │  Microsoft Graph                         │
-         ▼                                          │
-   Entra tenant objects                             │
-   (blueprint, agent, weather API)                   │
-         │                                          │
-         │  writes IDs + secret                      │
-         └──────────────►  .env  ──────────────────►│  docker compose
-                                                     │  (sidecar + llm-agent + weather-api)
+Lab1/scripts/*.ps1                    Lab1/sidecar/
+         │                                  │
+         │  Microsoft Graph                 │
+         ▼                                  │
+   Entra tenant objects                     │
+   (blueprint, agent, weather API)           │
+         │                                  │
+         │  you copy IDs + secret           │
+         └──────────────►  .env  ──────────►│  docker compose
+                                            │  (sidecar + llm-agent + weather-api)
 ```
 
-Re-running Compose after a notebook **re-run** (new suffix / new apps): update `.env` again from the latest notebook output, then `docker compose up` (rebuild if you changed code only).
-
-Install notebook deps once: `pip install -r ../scripts/requirements.txt` (paths are documented in the notebook).
+If you re-run the PowerShell scripts and create new apps, update `.env` again, then `docker compose up` (rebuild only if you changed container code).
 
 ## Sidecar pattern (why it exists)
 
@@ -138,7 +135,7 @@ In `docker-compose.yml`, the sidecar downstream API name **`weather-app`** must 
 - Agent: `.../AuthorizationHeaderUnauthenticated/weather-app?AgentIdentity=...`
 - Sidecar: `DownstreamApis__weather-app__BaseUrl`, `DownstreamApis__weather-app__Scopes__0=api://${WEATHER_API_APP_ID}/.default`, and `DownstreamApis__weather-app__RequestAppToken=true` for app-only token acquisition.
 
-`weather-api` sets `EXPECTED_AUDIENCE=api://${WEATHER_API_APP_ID}` so `aud` on **TR** matches the custom API you registered in the notebook.
+`weather-api` sets `EXPECTED_AUDIENCE=api://${WEATHER_API_APP_ID}` so `aud` on **TR** matches the custom API you registered with `weather-api-setup.ps1`.
 
 The sidecar has **no `ports:` mapping** on purpose — see [Agent ID SDK security guidance](https://learn.microsoft.com/en-us/entra/msidweb/agent-id-sdk/security). Only `llm-agent` talks to it on `http://sidecar:5000` inside `agent-network-dev`.
 
@@ -149,9 +146,8 @@ After you complete the [scripts → `.env` → Compose workflow](#scripts-lab1sc
 From **`Lab1/sidecar/`**:
 
 ```bash
-# If the notebook did not create .env yet:
 cp .env.example .env
-# Then run the notebook’s “Update sidecar .env” cells, or paste values from lab_context
+# Fill in values after running Lab1/scripts/*.ps1
 
 docker compose up --build -d
 ```
@@ -191,4 +187,4 @@ See [`.env.example`](.env.example) for the full template.
 | Agent never calls the tool | Ollama not ready or model not pulled; check `ollama` logs |
 | Connection refused to sidecar | Compose network issue; confirm `SIDECAR_URL=http://sidecar:5000` in llm-agent |
 
-For first-time issues, finish the notebook and confirm `.env` matches `lab_context` before debugging containers.
+For first-time issues, finish the `Lab1/scripts` setup and confirm `.env` matches script output before debugging containers.

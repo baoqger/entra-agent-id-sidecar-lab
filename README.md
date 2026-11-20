@@ -18,7 +18,7 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 
 ![Lab1 — autonomous agent, auth sidecar, and weather API demo](images/lab1.gif)
 
-1. **[`Lab1/scripts/`](Lab1/scripts/)** — Jupyter notebook provisions blueprint, Agent Identity, and Weather API app registration in Entra via Microsoft Graph.
+1. **[`Lab1/scripts/`](Lab1/scripts/)** — PowerShell scripts provision blueprint, Agent Identity, and Weather API app registration in Entra via Microsoft Graph.
 2. **[`Lab1/sidecar/`](Lab1/sidecar/)** — Docker Compose runs the official auth sidecar, a LangChain/Ollama sample agent, and a weather API that validates tokens.
 
 **Start here for setup and runtime:** [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md).
@@ -31,7 +31,7 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 
 | Path | Purpose |
 |------|---------|
-| [`Lab1/scripts/`](Lab1/scripts/) | Entra setup notebook and Python dependencies |
+| [`Lab1/scripts/`](Lab1/scripts/) | Entra setup PowerShell scripts (`entra-agent-blueprint-identity-setup.ps1`, `weather-api-setup.ps1`) |
 | [`Lab1/sidecar/`](Lab1/sidecar/) | Compose stack, environment template, detailed lab docs |
 | [`Lab1/sidecar/llm-agent/`](Lab1/sidecar/llm-agent/) | Sample agent and chat UI |
 | [`Lab1/sidecar/weather-api/`](Lab1/sidecar/weather-api/) | Sample downstream API |
@@ -41,12 +41,12 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 | Topic | Where to read |
 |-------|----------------|
 | Workflow, architecture, quick start, troubleshooting | [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md) |
-| Entra provisioning | [`Lab1/scripts/entra-agent-id-setup.ipynb`](Lab1/scripts/entra-agent-id-setup.ipynb) |
+| Entra provisioning | [`Lab1/scripts/entra-agent-blueprint-identity-setup.ps1`](Lab1/scripts/entra-agent-blueprint-identity-setup.ps1), [`Lab1/scripts/weather-api-setup.ps1`](Lab1/scripts/weather-api-setup.ps1) |
 | Downstream token validation | [`Lab1/sidecar/weather-api/README.md`](Lab1/sidecar/weather-api/README.md) |
 
 ## Security
 
-Do not commit [`Lab1/sidecar/.env`](Lab1/sidecar/.env) or notebook outputs that contain secrets. This repo is **sample lab code**, not production guidance.
+Do not commit [`Lab1/sidecar/.env`](Lab1/sidecar/.env) or other files that contain blueprint client secrets. This repo is **sample lab code**, not production guidance.
 
 ## Contributing
 
