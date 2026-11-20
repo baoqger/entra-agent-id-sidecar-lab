@@ -23,7 +23,6 @@ Copy from the console output:
 ```powershell
 cd Lab1\scripts
 .\entra-agent-blueprint-identity-setup.ps1 -TenantId '<tenant-guid>'
-# Or omit names to use defaults: Lab1 Blueprint / Lab1 Agent + random suffix
 ```
 
 ### 2. Weather API (Entra)
