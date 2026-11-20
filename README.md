@@ -23,30 +23,39 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 
 **Start here for setup and runtime:** [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md).
 
-### Lab2 — (under development)
+### Lab2 — Sidecar stack, on-behalf-of (OBO) (available)
 
-**Lab2** is in progress and will be added under `Lab2/` when it is ready. Check this section or the repository tree for updates.
+![Lab2 — signed-in user, OBO via auth sidecar, and weather API demo](images/lab2.gif)
+
+1. **[`Lab2/scripts/`](Lab2/scripts/)** — PowerShell scripts provision blueprint, Agent Identity, Weather API (delegated), MSAL client SPA, and blueprint `access_as_user` for OBO.
+2. **[`Lab2/sidecar/`](Lab2/sidecar/)** — Same Compose pattern as Lab1, with MSAL sign-in in the browser and OBO token exchange through the sidecar.
+
+**Start here for setup and runtime:** [`Lab2/sidecar/README.md`](Lab2/sidecar/README.md) · script order: [`Lab2/scripts/README.md`](Lab2/scripts/README.md).
 
 ## Repository layout
 
 | Path | Purpose |
 |------|---------|
-| [`Lab1/scripts/`](Lab1/scripts/) | Entra setup PowerShell scripts (`entra-agent-blueprint-identity-setup.ps1`, `weather-api-setup.ps1`) |
-| [`Lab1/sidecar/`](Lab1/sidecar/) | Compose stack, environment template, detailed lab docs |
-| [`Lab1/sidecar/llm-agent/`](Lab1/sidecar/llm-agent/) | Sample agent and chat UI |
-| [`Lab1/sidecar/weather-api/`](Lab1/sidecar/weather-api/) | Sample downstream API |
+| [`Lab1/scripts/`](Lab1/scripts/) | Lab1 Entra setup (`entra-agent-blueprint-identity-setup.ps1`, `weather-api-setup.ps1`) |
+| [`Lab1/sidecar/`](Lab1/sidecar/) | Lab1 Compose stack (autonomous / app-only) |
+| [`Lab2/scripts/`](Lab2/scripts/) | Lab2 Entra setup (blueprint, weather OBO, client SPA, blueprint OBO consent) |
+| [`Lab2/sidecar/`](Lab2/sidecar/) | Lab2 Compose stack (OBO with MSAL) |
+| [`Lab1/sidecar/llm-agent/`](Lab1/sidecar/llm-agent/), [`Lab2/sidecar/llm-agent/`](Lab2/sidecar/llm-agent/) | Sample agent and chat UI |
+| [`Lab1/sidecar/weather-api/`](Lab1/sidecar/weather-api/), [`Lab2/sidecar/weather-api/`](Lab2/sidecar/weather-api/) | Sample downstream API |
 
 ## Documentation map
 
 | Topic | Where to read |
 |-------|----------------|
-| Workflow, architecture, quick start, troubleshooting | [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md) |
-| Entra provisioning | [`Lab1/scripts/entra-agent-blueprint-identity-setup.ps1`](Lab1/scripts/entra-agent-blueprint-identity-setup.ps1), [`Lab1/scripts/weather-api-setup.ps1`](Lab1/scripts/weather-api-setup.ps1) |
-| Downstream token validation | [`Lab1/sidecar/weather-api/README.md`](Lab1/sidecar/weather-api/README.md) |
+| Lab1 workflow, architecture, quick start | [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md) |
+| Lab1 Entra provisioning | [`Lab1/scripts/README.md`](Lab1/scripts/README.md) |
+| Lab2 OBO workflow, architecture, quick start | [`Lab2/sidecar/README.md`](Lab2/sidecar/README.md) |
+| Lab2 Entra provisioning (four scripts) | [`Lab2/scripts/README.md`](Lab2/scripts/README.md) |
+| Downstream token validation | [`Lab1/sidecar/weather-api/README.md`](Lab1/sidecar/weather-api/README.md) (same pattern in Lab2) |
 
 ## Security
 
-Do not commit [`Lab1/sidecar/.env`](Lab1/sidecar/.env) or other files that contain blueprint client secrets. This repo is **sample lab code**, not production guidance.
+Do not commit [`Lab1/sidecar/.env`](Lab1/sidecar/.env), [`Lab2/sidecar/.env`](Lab2/sidecar/.env), or other files that contain blueprint client secrets. This repo is **sample lab code**, not production guidance.
 
 ## Contributing
 
