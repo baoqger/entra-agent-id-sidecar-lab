@@ -2,6 +2,8 @@
 
 PowerShell scripts provision Microsoft Entra objects for the [Lab1 sidecar stack](../sidecar/README.md). Run them **before** `docker compose` in `Lab1/sidecar/`.
 
+Use **`Lab1/sidecar/.env`**, not Lab2’s file—Lab1 registers the Weather API with an app role (`Weather.Read`) for autonomous tokens. OBO and MSAL setup live in [Lab2/scripts](../Lab2/scripts/README.md).
+
 ## Prerequisites
 
 - [Microsoft Graph PowerShell SDK](https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation) (`Install-Module Microsoft.Graph.Authentication -Scope CurrentUser`)
@@ -12,7 +14,7 @@ PowerShell scripts provision Microsoft Entra objects for the [Lab1 sidecar stack
 
 ### 1. Agent ID (Entra)
 
-From this folder, run [entra-agent-blueprint-identity-setup.ps1](./entra-agent-blueprint-identity-setup.ps1) (requires `Connect-MgGraph` with Agent ID blueprint scopes).
+From this folder, run [entra-agent-blueprint-identity-setup.ps1](./entra-agent-blueprint-identity-setup.ps1) (requires `Connect-MgGraph` with Agent ID blueprint scopes). Default Entra display names: `Lab1 Blueprint` / `Lab1 Agent` plus a random suffix (override with `-BlueprintName` / `-AgentName`).
 
 Copy from the console output:
 
@@ -27,7 +29,7 @@ cd Lab1\scripts
 
 ### 2. Weather API (Entra)
 
-Set `TENANT_ID` and `AGENT_CLIENT_ID` in [sidecar/.env](../sidecar/.env) (or pass `-TenantId` / `-AgentAppId`), then run [weather-api-setup.ps1](./weather-api-setup.ps1).
+Copy [sidecar/.env.example](../sidecar/.env.example) to [sidecar/.env](../sidecar/.env) if you have not already. Set `TENANT_ID` and `AGENT_CLIENT_ID` (or pass `-TenantId` / `-AgentAppId`), then run [weather-api-setup.ps1](./weather-api-setup.ps1). This lab registers an **application permission** (`Weather.Read` app role), not Lab2’s delegated `weather.read` scope.
 
 Copy the **Weather API app id** from the script summary.
 

@@ -25,7 +25,7 @@ If validation succeeds, the response includes real weather from Open-Meteo. If t
 
 ## Scripts (`Lab1/scripts`) and this sidecar stack
 
-The **`sidecar/`** folder is only the **runtime**: containers, sample agent, and sample downstream API. It does **not** create anything in Microsoft Entra. That work lives in **`Lab1/scripts/`** — PowerShell setup scripts (`entra-agent-blueprint-identity-setup.ps1`, `weather-api-setup.ps1`).
+The **`sidecar/`** folder is only the **runtime**: containers, sample agent, and sample downstream API. It does **not** create anything in Microsoft Entra. That work lives in **`Lab1/scripts/`** — see [`Lab1/scripts/README.md`](../scripts/README.md) for script order (`entra-agent-blueprint-identity-setup.ps1`, `weather-api-setup.ps1`).
 
 Think of two layers:
 
@@ -137,6 +137,8 @@ In `docker-compose.yml`, the sidecar downstream API name **`weather-app`** must 
 
 `weather-api` sets `EXPECTED_AUDIENCE=api://${WEATHER_API_APP_ID}` so `aud` on **TR** matches the custom API you registered with `weather-api-setup.ps1`.
 
+`docker-compose.yml` also declares an OBO downstream (`weather`) for parity with the shared sample agent code, but the **Lab1 chat UI only enables Autonomous**—see [`llm-agent/templates/index.html`](llm-agent/templates/index.html).
+
 The sidecar has **no `ports:` mapping** on purpose — see [Agent ID SDK security guidance](https://learn.microsoft.com/en-us/entra/msidweb/agent-id-sdk/security). Only `llm-agent` talks to it on `http://sidecar:5000` inside `agent-network-dev`.
 
 ## Quick start
@@ -145,10 +147,9 @@ After you complete the [scripts → `.env` → Compose workflow](#scripts-lab1sc
 
 From **`Lab1/sidecar/`**:
 
-```bash
-cp .env.example .env
-# Fill in values after running Lab1/scripts/*.ps1
+Copy [`.env.example`](.env.example) to [`.env`](.env) before step 2 in the script workflow (at minimum `TENANT_ID` for `weather-api-setup.ps1`). Finish filling `.env` after both scripts, then from **`Lab1/sidecar/`**:
 
+```bash
 docker compose up --build -d
 ```
 
@@ -175,8 +176,8 @@ See [`.env.example`](.env.example) for the full template.
 
 ## Deeper dives
 
-- Downstream validation and claims: [`weather-api/README.md`](weather-api/README.md)
-- Agent UI, tools, and implementation: [`llm-agent/`](llm-agent/) (`app.py`, `templates/`)
+- Downstream validation and claims: [`weather-api/app.py`](weather-api/app.py) (`validate_token`, `EXPECTED_AUDIENCE`, JWKS)
+- Agent UI, tools, and implementation: [`llm-agent/app.py`](llm-agent/app.py), [`llm-agent/templates/index.html`](llm-agent/templates/index.html)
 
 ## Troubleshooting (autonomous)
 

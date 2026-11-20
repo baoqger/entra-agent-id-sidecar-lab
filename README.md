@@ -14,6 +14,8 @@ This repo is a growing set of hands-on labs for **Entra Agent ID** and the **aut
 
 Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials and token exchange belong in a **sidecar** in the same trust boundary as the agent—not in application code.
 
+**Which lab?** Start with **Lab1** (autonomous / app-only Agent Identity tokens). Use **Lab2** when you need **on-behalf-of (OBO)** with a signed-in user and MSAL. Each lab has its own `LabN/scripts/` and `LabN/sidecar/.env`—provision separate Entra apps per lab; do not reuse Lab1 IDs in Lab2.
+
 ### Lab1 — Sidecar stack (available)
 
 ![Lab1 — autonomous agent, auth sidecar, and weather API demo](images/lab1.gif)
@@ -21,7 +23,7 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 1. **[`Lab1/scripts/`](Lab1/scripts/)** — PowerShell scripts provision blueprint, Agent Identity, and Weather API app registration in Entra via Microsoft Graph.
 2. **[`Lab1/sidecar/`](Lab1/sidecar/)** — Docker Compose runs the official auth sidecar, a LangChain/Ollama sample agent, and a weather API that validates tokens.
 
-**Start here for setup and runtime:** [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md).
+**Start here:** [`Lab1/sidecar/README.md`](Lab1/sidecar/README.md) (workflow and Compose) · [`Lab1/scripts/README.md`](Lab1/scripts/README.md) (Entra script order).
 
 ### Lab2 — Sidecar stack, on-behalf-of (OBO) (available)
 
@@ -30,7 +32,7 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 1. **[`Lab2/scripts/`](Lab2/scripts/)** — PowerShell scripts provision blueprint, Agent Identity, Weather API (delegated), MSAL client SPA, and blueprint `access_as_user` for OBO.
 2. **[`Lab2/sidecar/`](Lab2/sidecar/)** — Same Compose pattern as Lab1, with MSAL sign-in in the browser and OBO token exchange through the sidecar.
 
-**Start here for setup and runtime:** [`Lab2/sidecar/README.md`](Lab2/sidecar/README.md) · script order: [`Lab2/scripts/README.md`](Lab2/scripts/README.md).
+**Start here:** [`Lab2/sidecar/README.md`](Lab2/sidecar/README.md) (workflow and Compose) · [`Lab2/scripts/README.md`](Lab2/scripts/README.md) (Entra script order).
 
 ## Repository layout
 
@@ -51,7 +53,8 @@ Agents need **Agent Identity** tokens for downstream APIs. Blueprint credentials
 | Lab1 Entra provisioning | [`Lab1/scripts/README.md`](Lab1/scripts/README.md) |
 | Lab2 OBO workflow, architecture, quick start | [`Lab2/sidecar/README.md`](Lab2/sidecar/README.md) |
 | Lab2 Entra provisioning (four scripts) | [`Lab2/scripts/README.md`](Lab2/scripts/README.md) |
-| Downstream token validation | [`Lab1/sidecar/weather-api/README.md`](Lab1/sidecar/weather-api/README.md) (same pattern in Lab2) |
+| Sample agent (`llm-agent`) | [`Lab1/sidecar/llm-agent/app.py`](Lab1/sidecar/llm-agent/app.py) (Lab2 copy under `Lab2/sidecar/llm-agent/`) |
+| Downstream JWT validation | [`Lab1/sidecar/weather-api/app.py`](Lab1/sidecar/weather-api/app.py) (same pattern in Lab2) |
 
 ## Security
 

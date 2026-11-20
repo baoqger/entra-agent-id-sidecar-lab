@@ -4,6 +4,8 @@ PowerShell scripts provision Microsoft Entra for the [Lab2 sidecar stack](../sid
 
 Run these **before** `docker compose` in `Lab2/sidecar/`.
 
+Use a **separate** Entra setup from Lab1 (`Lab2/sidecar/.env`, not `Lab1/sidecar/.env`). Lab1 provisions app roles for autonomous tokens; Lab2 adds delegated scopes, an MSAL SPA, and blueprint `access_as_user` for OBO.
+
 ## Prerequisites
 
 - [Microsoft Graph PowerShell SDK](https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation) (`Install-Module Microsoft.Graph.Authentication -Scope CurrentUser`)

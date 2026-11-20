@@ -74,7 +74,7 @@ sequenceDiagram
     Browser->>Entra: auth code + scope api://blueprint/access_as_user
     Entra-->>Browser: User token Tc
     User->>LLM: Chat (OBO mode) + weather question
-  Browser->>LLM: POST /api/chat with user_token Tc
+    Browser->>LLM: POST /api/chat with user_token Tc
     LLM->>Ollama: Plan / tool call
     Ollama-->>LLM: get_weather(Seattle)
     LLM->>Sidecar: AuthorizationHeader/weather?AgentIdentity=... Bearer Tc
@@ -107,23 +107,18 @@ In [`docker-compose.yml`](docker-compose.yml):
   - `DownstreamApis__weather__BaseUrl` → `http://weather-api:8080/`
   - `DownstreamApis__weather__Scopes__0` → `api://${WEATHER_API_APP_ID}/.default`
   - No `RequestAppToken=true` (delegated / OBO path).
-- **Autonomous (optional)** — name `weather-app`:
-  - `AuthorizationHeaderUnauthenticated/weather-app` in code
-  - `RequestAppToken=true` and `.default` scope for app-only **TR**.
-- **weather-api** — `EXPECTED_AUDIENCE=${WEATHER_API_APP_ID}` (full `api://...` URI is set in the app from env).
+- **Autonomous (compose only)** — name `weather-app` with `RequestAppToken=true` remains in compose for shared sample code; the **Lab2 chat UI disables Autonomous** (OBO only)—see [`llm-agent/templates/index.html`](llm-agent/templates/index.html). For app-only, use [Lab1](../../Lab1/sidecar/README.md).
+- **weather-api** — `EXPECTED_AUDIENCE=api://${WEATHER_API_APP_ID}` in compose (must match `aud` on **TR**).
 - **llm-agent** — `CLIENT_SPA_APP_ID`, `BLUEPRINT_APP_ID`, `AGENT_APP_ID` (from `AGENT_CLIENT_ID`), `TENANT_ID`.
 
 The sidecar has **no host ports** — see [Agent ID SDK security](https://learn.microsoft.com/en-us/entra/msidweb/agent-id-sdk/security). The agent uses `http://sidecar:5000` on the Compose network.
 
 ## Quick start
 
-1. Complete all four scripts in [`Lab2/scripts`](../scripts/README.md) and fill [`.env`](.env) (include `CLIENT_SPA_APP_ID`).
+1. Complete all four scripts in [`Lab2/scripts/README.md`](../scripts/README.md). Copy [`.env.example`](.env.example) to [`.env`](.env) early (at least `TENANT_ID` before step 2) and fill all IDs after step 4, including `CLIENT_SPA_APP_ID`.
 2. From `Lab2/sidecar/`:
 
 ```bash
-cp .env.example .env
-# Paste values from script output
-
 docker compose up --build -d
 ```
 
@@ -150,8 +145,8 @@ Copy `CLIENT_SPA_APP_ID` from [`client-spa-setup.ps1`](../scripts/client-spa-set
 
 ## Deeper dives
 
-- Token validation: [`weather-api/README.md`](weather-api/README.md) if present; [`weather-api/app.py`](weather-api/app.py)
-- Agent, MSAL, OBO tools: [`llm-agent/app.py`](llm-agent/app.py)
+- Token validation: [`weather-api/app.py`](weather-api/app.py)
+- Agent, MSAL, OBO tools: [`llm-agent/app.py`](llm-agent/app.py), [`llm-agent/templates/index.html`](llm-agent/templates/index.html)
 
 ## Troubleshooting (OBO)
 
@@ -161,7 +156,7 @@ Copy `CLIENT_SPA_APP_ID` from [`client-spa-setup.ps1`](../scripts/client-spa-set
 | AADSTS65001 or consent errors                 | Run [`client-blueprint-obo-setup.ps1`](../scripts/client-blueprint-obo-setup.ps1); check SPA → blueprint consent                             |
 | Sidecar 401 on `/AuthorizationHeader/weather` | **Tc** not for blueprint `access_as_user`, or blueprint URI/scope mismatch                                                                   |
 | `401` from weather-api                        | `WEATHER_API_APP_ID` / `EXPECTED_AUDIENCE` drift; OBO `weather.read` consent via [`weather-api-setup.ps1`](../scripts/weather-api-setup.ps1) |
-| Autonomous works, OBO fails                   | OBO uses downstream name `weather`, not `weather-app`; check compose and signed-in flow                                                      |
+| OBO tool call fails after sign-in             | OBO uses sidecar downstream name `weather`, not `weather-app`; confirm compose `DownstreamApis__weather__*` and `AuthorizationHeader/weather` in [`llm-agent/app.py`](llm-agent/app.py) |
 | Connection refused to sidecar                 | `SIDECAR_URL=http://sidecar:5000` on the agent network                                                                                       |
 
-Confirm [`.env`](../scripts/README.md) matches the latest script output before debugging containers.
+Confirm [`.env`](.env) matches the latest [`Lab2/scripts`](../scripts/README.md) output before debugging containers.
